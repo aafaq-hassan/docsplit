@@ -62,9 +62,14 @@ module Docsplit
   # Use JODCConverter to extract the documents as PDFs.
   # If the document is in an image format, use GraphicsMagick to extract the PDF.
   def self.extract_pdf(docs, opts={})
+    opts[:output_type] = :pdf
     PdfExtractor.new.extract(docs, opts)
   end
 
+  def self.extract(docs, opts={})
+    PdfExtractor.new.extract(docs, opts)
+  end
+  
   # Define custom methods for each of the metadata keys that we support.
   # Use the ExtractInfo Java class to print out a single bit of metadata.
   METADATA_KEYS.each do |key|

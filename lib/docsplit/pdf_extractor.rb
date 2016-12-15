@@ -115,7 +115,8 @@ module Docsplit
     
     # Convert documents to PDF.
     def extract(docs, opts)
-      output_type = opts[:output_type] || :pdf
+      convert_to = opts[:convert_to] || :pdf
+      output_extension = opts[:output_extension] || :pdf
       out = opts[:output] || '.'
       FileUtils.mkdir_p out unless File.exists?(out)
       [docs].flatten.each do |doc|
@@ -124,13 +125,13 @@ module Docsplit
         escaped_doc, escaped_out, escaped_basename = [doc, out, basename].map(&ESCAPE)
 
         if GM_FORMATS.include?(`file -b --mime #{ESCAPE[doc]}`.strip.split(/[:;]\s+/)[0])
-          `gm convert #{escaped_doc} #{escaped_out}/#{escaped_basename}.#{output_type}`
+          `gm convert #{escaped_doc} #{escaped_out}/#{escaped_basename}.#{output_extension}`
         else
           if opts[:port].nil? && libre_office?
             # Set the LibreOffice user profile, so that parallel uses of cloudcrowd don't trip over each other.
             ENV['SYSUSERCONFIG']="file://#{File.expand_path(escaped_out)}"
             
-            options = "--headless --invisible  --norestore --nolockcheck --convert-to #{output_type} --outdir #{escaped_out} #{escaped_doc}"
+            options = "--headless --invisible  --norestore --nolockcheck --convert-to #{convert_to} --outdir #{escaped_out} #{escaped_doc}"
             cmd = "#{office_executable} #{options} 2>&1"
             result = `#{cmd}`.chomp
             raise ExtractionFailed, result if $? != 0
@@ -138,7 +139,7 @@ module Docsplit
           else # open office presumably, rely on JODConverter to figure it out.
             options = "-jar #{ESCAPED_ROOT}/vendor/jodconverter/jodconverter-core-3.0-beta-4.jar -r #{ESCAPED_ROOT}/vendor/conf/document-formats.js"
             options = "#{options} -p #{opts[:port]}" unless opts[:port].nil?
-            run_jod "#{options} #{escaped_doc} #{escaped_out}/#{escaped_basename}.#{output_type}", [], {}
+            run_jod "#{options} #{escaped_doc} #{escaped_out}/#{escaped_basename}.#{output_extension}", [], {}
           end
         end
       end
